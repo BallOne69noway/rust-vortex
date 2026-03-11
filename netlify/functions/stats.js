@@ -1,26 +1,38 @@
 export const handler = async (event) => {
-  // Получаем steamid из параметров запроса
-  const steamid = event.queryStringParameters.steamid;
+  let steamid = event.queryStringParameters.steamid;
   const STEAM_API_KEY = process.env.VITE_STEAM_API_KEY;
   const rustAppId = "252490";
 
   if (!steamid) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: 'SteamID is required' }),
-    };
+    return { statusCode: 400, body: JSON.stringify({ error: 'Input is required' }) };
   }
 
   try {
-    // 1. Получаем инфо о игроке
+    // 1. Очистка ввода: если это ссылка, вытаскиваем ник или ID
+    // Убираем слеши и части ссылки
+    steamid = steamid.replace(/https?:\/\/steamcommunity\.com\/(profiles|id)\//, '').replace(/\/$/, '');
+
+    // 2. Если это ник (не состоит только из цифр), превращаем его в ID
+    if (!/^\d{17}$/.test(steamid)) {
+      const resolveRes = await fetch(`https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key=${STEAM_API_KEY}&vanityurl=${steamid}`);
+      const resolveData = await resolveRes.json();
+      
+      if (resolveData.response.success === 1) {
+        steamid = resolveData.response.steamid;
+      } else {
+        return { statusCode: 404, body: JSON.stringify({ error: 'User not found' }) };
+      }
+    }
+
+    // 3. Получаем инфо о игроке
     const pRes = await fetch(`https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${STEAM_API_KEY}&steamids=${steamid}`);
     const pData = await pRes.json();
 
-    // 2. Получаем статистику игры
+    // 4. Получаем статистику игры (Rust)
     const sRes = await fetch(`https://api.steampowered.com/ISteamUser/GetUserStatsForGame/v0002/?appid=${rustAppId}&key=${STEAM_API_KEY}&steamid=${steamid}`);
     const sData = await sRes.json();
 
-    // 3. Получаем время в игре
+    // 5. Получаем время в игре
     const tRes = await fetch(`https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=${STEAM_API_KEY}&steamid=${steamid}&format=json&appids_filter[0]=${rustAppId}`);
     const tData = await tRes.json();
 
@@ -36,7 +48,7 @@ export const handler = async (event) => {
   } catch (error) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Failed to fetch Steam data', details: error.message }),
+      body: JSON.stringify({ error: 'Internal Server Error', details: error.message }),
     };
   }
 };
