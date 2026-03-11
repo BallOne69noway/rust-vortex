@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/react-web' // или просто react()
+import react from '@vitejs/react-refresh' 
 
 export default defineConfig({
   plugins: [react()],
-  base: '/rust-vortex/', // Добавь эту строку!
+  base: '/rust-vortex/', 
 })
