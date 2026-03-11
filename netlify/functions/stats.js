@@ -1,6 +1,6 @@
 export const handler = async (event) => {
   let steamid = event.queryStringParameters.steamid;
-  const STEAM_API_KEY = process.env.VITE_STEAM_API_KEY;
+  const STEAM_API_KEY = process.env.STEAM_API_KEY || process.env.VITE_STEAM_API_KEY;
   const rustAppId = "252490";
 
   console.log("Searching for:", steamid); // Увидим в логах, что пришло

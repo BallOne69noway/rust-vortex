@@ -6,7 +6,7 @@ function App() {
   const [gameStats, setGameStats] = useState(null)
   const [playTime, setPlayTime] = useState(0)
   const [loading, setLoading] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('') // Поле для ввода ID
+  const [searchQuery, setSearchQuery] = useState('') // Поле для ввода ID или ссылки
   const [error, setError] = useState(null)
 
   const fetchSteamData = async () => {
@@ -15,8 +15,13 @@ function App() {
     setError(null)
 
     try {
-      // Запрос к нашему новому API-роуту на Vercel
-      const response = await fetch(`/api/stats?steamid=${searchQuery}`)
+      // ИСПОЛЬЗУЕМ ПРАВИЛЬНЫЙ ПУТЬ К NETLIFY FUNCTIONS
+      const response = await fetch(`/.netlify/functions/stats?steamid=${searchQuery}`)
+      
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`)
+      }
+
       const data = await response.json()
 
       if (data.error) {
@@ -28,7 +33,7 @@ function App() {
       setPlayTime(data.playtime)
     } catch (e) {
       console.error("Sync Error:", e)
-      setError("FAILED TO HARVEST DATA. CHECK ID.")
+      setError("FAILED TO HARVEST DATA. CHECK ID OR URL.")
     } finally {
       setLoading(false)
     }
@@ -79,7 +84,7 @@ function App() {
               type="text" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="ENTER STEAMID64..."
+              placeholder="ENTER STEAMID64 OR PROFILE URL..."
               className="w-full bg-transparent border-b-2 border-white/10 py-4 text-2xl outline-none focus:border-red-600 transition-all duration-500 uppercase font-black tracking-widest placeholder:text-zinc-800"
             />
             <div className="absolute bottom-0 left-0 h-[2px] w-0 group-focus-within:w-full bg-red-600 transition-all duration-700"></div>
