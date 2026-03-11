@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ] # или master, если твоя ветка называется так
+    branches: [ main ]
 
 permissions:
   contents: write
@@ -23,6 +23,9 @@ jobs:
         run: |
           npm install
           npm run build
+        env:
+          VITE_STEAM_API_KEY: ${{ secrets.VITE_STEAM_API_KEY }}
+          VITE_STEAM_ID: ${{ secrets.VITE_STEAM_ID }}
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4
